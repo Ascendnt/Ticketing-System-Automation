@@ -1,0 +1,17 @@
+# Docker
+n8n_data/
+ollama_data/
+nocodb_data/
+
+# CodeIgniter 4 (once we scaffold it)
+ci4-app/vendor/
+ci4-app/writable/cache/*
+ci4-app/writable/logs/*
+ci4-app/writable/session/*
+ci4-app/writable/uploads/*
+ci4-app/.env
+
+# General
+.DS_Store
+*.log
+node_modules/

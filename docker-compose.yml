@@ -1,0 +1,69 @@
+# Universal HelpDesk - prototype stack (100% free, self-hosted)
+#
+#   n8n     -> orchestration + intake form + AI nodes   http://localhost:5678
+#   ollama  -> local LLM (handles routine requests)     http://localhost:11434
+#   nocodb  -> ticket database + UI + auto REST API      http://localhost:8080
+#
+# The only non-self-hosted piece is Google Gemini (free tier) for complex requests,
+# which you call from inside n8n with an API key. No credit card, no license.
+#
+# Start:   docker compose up -d
+# Logs:    docker compose logs -f
+# Stop:    docker compose down          (data is kept in the named volumes below)
+# Wipe:    docker compose down -v        (deletes ALL data - careful)
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: helpdesk-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Manila
+      - TZ=Asia/Manila
+      # Required so you can log in over plain http on localhost:
+      - N8N_SECURE_COOKIE=false
+      # Silences a harmless permissions warning on some hosts:
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: helpdesk-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # --- GPU (optional) ---------------------------------------------------
+    # CPU works fine for the small models used here. If you have an NVIDIA GPU
+    # with the container toolkit installed, uncomment the block below:
+    #
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    # ---------------------------------------------------------------------
+
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: helpdesk-nocodb
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - nocodb_data:/usr/app/data
+
+volumes:
+  n8n_data:
+  ollama_data:
+  nocodb_data:
